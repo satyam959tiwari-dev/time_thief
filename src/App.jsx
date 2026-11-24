@@ -19,6 +19,9 @@ function generateQuestion() {
 export default function App() {
   const [time, setTime] = useState(10);
   const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(
+  () => Number(localStorage.getItem("highScore") || 0)
+);
   const [started, setStarted] = useState(false);
   const [question, setQuestion] = useState(null);
 
@@ -34,6 +37,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, [playing]);
 
+  useEffect(() => {
+    localStorage.setItem("highScore", highScore);
+  }, [highScore]);
+
   function startGame() {
     setTime(10);
     setScore(0);
@@ -42,24 +49,25 @@ export default function App() {
   }
 
   function checkAnswer(option) {
-    if (!playing) return;
-
     if (option === question.answer) {
-      setScore(s => s + 10);
+      const newScore = score + 10;
+      setScore(newScore);
+      setHighScore(best => Math.max(best, newScore));
       setTime(t => t + 3);
-    } else {
-      setTime(t => Math.max(0, t - 2));
-    }
+  } else {
+    setTime(t => Math.max(0, t - 2));
+}
 
     setQuestion(generateQuestion());
   }
 
   return (
     <main className="game">
-      <p className="tagline">STEAL TIME. BEAT THE CLOCK.</p>
+      <p className="tagline">STEAL TIME. BEAT THE CLOCK. Play Fast!</p>
       <h1>TIME <span>THIEF</span></h1>
 
       <p>Score: {score}</p>
+      <p>🏆 High Score: {highScore}</p>
 
       <div className={`timer ${time <= 3 ? "danger" : ""}`}>
         {time}s
