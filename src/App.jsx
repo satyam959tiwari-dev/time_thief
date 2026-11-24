@@ -1,122 +1,96 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+function generateQuestion() {
+  const a = Math.floor(Math.random() * 20) + 1;
+  const b = Math.floor(Math.random() * 20) + 1;
+  const answer = a + b;
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+  const options = [answer, answer + 1, answer - 1, answer + 3];
 
-      <div className="ticks"></div>
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  return { a, b, answer, options };
 }
 
-export default App
+export default function App() {
+  const [time, setTime] = useState(10);
+  const [score, setScore] = useState(0);
+  const [started, setStarted] = useState(false);
+  const [question, setQuestion] = useState(null);
+
+  const playing = started && time > 0;
+
+  useEffect(() => {
+    if (!playing) return;
+
+    const timer = setInterval(() => {
+      setTime(t => Math.max(0, t - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [playing]);
+
+  function startGame() {
+    setTime(10);
+    setScore(0);
+    setQuestion(generateQuestion());
+    setStarted(true);
+  }
+
+  function checkAnswer(option) {
+    if (!playing) return;
+
+    if (option === question.answer) {
+      setScore(s => s + 10);
+      setTime(t => t + 3);
+    } else {
+      setTime(t => Math.max(0, t - 2));
+    }
+
+    setQuestion(generateQuestion());
+  }
+
+  return (
+    <main className="game">
+      <p className="tagline">STEAL TIME. BEAT THE CLOCK.</p>
+      <h1>TIME <span>THIEF</span></h1>
+
+      <p>Score: {score}</p>
+
+      <div className={`timer ${time <= 3 ? "danger" : ""}`}>
+        {time}s
+      </div>
+
+      {playing ? (
+        <>
+          <h2>{question.a} + {question.b} = ?</h2>
+
+          <div className="options">
+            {question.options.map(option => (
+              <button
+                key={option}
+                onClick={() => checkAnswer(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <h2>{started ? "Time's Up!" : "Ready to play?"}</h2>
+
+          <button onClick={startGame}>
+            {started ? "Play Again" : "Start Game"}
+          </button>
+        </>
+      )}
+
+      <footer>Correct +3s · Wrong −2s</footer>
+    </main>
+  );
+}
