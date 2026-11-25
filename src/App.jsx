@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-function generateQuestion() {
-  const a = Math.floor(Math.random() * 20) + 1;
-  const b = Math.floor(Math.random() * 20) + 1;
+function generateQuestion(difficulty) {
+  const max = difficulty === "easy" ? 10 : difficulty === "medium" ? 30 : 100;
+
+  const a = Math.floor(Math.random() * max) + 1;
+  const b = Math.floor(Math.random() * max) + 1;
   const answer = a + b;
 
   const options = [answer, answer + 1, answer - 1, answer + 3];
@@ -27,6 +29,7 @@ export default function App() {
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [bonus, setBonus] = useState("");
+  const [difficulty, setDifficulty] = useState("easy");
   const [paused, setPaused] = useState(false);
 
   const playing = started && time > 0;
@@ -49,7 +52,7 @@ export default function App() {
   function startGame() {
     setTime(10);
     setScore(0);
-    setQuestion(generateQuestion());
+    setQuestion(generateQuestion(difficulty));
     setStarted(true);
     setStreak(0);
     setBestStreak(0);
@@ -90,7 +93,7 @@ export default function App() {
       setTime((t) => Math.max(0, t - 2));
     }
 
-    setQuestion(generateQuestion());
+    setQuestion(generateQuestion(difficulty));
   }
 
   return (
@@ -137,6 +140,15 @@ export default function App() {
       ) : (
         <>
           <h2>{started ? "Time's Up!" : "Ready to play?"}</h2>
+
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value)}
+          >
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
 
           <button onClick={startGame}>
             {started ? "Play Again" : "Start Game"}
