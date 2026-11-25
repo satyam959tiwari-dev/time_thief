@@ -30,18 +30,20 @@ export default function App() {
   const [bestStreak, setBestStreak] = useState(0);
   const [bonus, setBonus] = useState("");
   const [difficulty, setDifficulty] = useState("easy");
+  const [paused, setPaused] = useState(false);
 
   const playing = started && time > 0;
+  const running = playing && !paused;
 
   useEffect(() => {
-    if (!playing) return;
+    if (!running) return;
 
     const timer = setInterval(() => {
       setTime((t) => Math.max(0, t - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [playing]);
+  }, [running]);
 
   useEffect(() => {
     localStorage.setItem("highScore", highScore);
@@ -55,10 +57,11 @@ export default function App() {
     setStreak(0);
     setBestStreak(0);
     setBonus("");
+    setPaused(false);
   }
 
   function checkAnswer(option) {
-    if (!playing || !question) return;
+    if (!playing || !question || paused) return;
 
     setBonus("");
 
@@ -110,6 +113,12 @@ export default function App() {
 
       <div className={`timer ${time <= 3 ? "danger" : ""}`}>{time}s</div>
 
+      {playing && (
+        <button onClick={() => setPaused((p) => !p)}>
+          {paused ? "▶ Resume" : "⏸ Pause"}
+        </button>
+      )}
+
       {playing ? (
         <>
           <h2>
@@ -118,7 +127,11 @@ export default function App() {
 
           <div className="options">
             {question.options.map((option) => (
-              <button key={option} onClick={() => checkAnswer(option)}>
+              <button
+                key={option}
+                disabled={paused}
+                onClick={() => checkAnswer(option)}
+              >
                 {option}
               </button>
             ))}
