@@ -19,11 +19,14 @@ function generateQuestion() {
 export default function App() {
   const [time, setTime] = useState(10);
   const [score, setScore] = useState(0);
-  const [highScore, setHighScore] = useState(
-  () => Number(localStorage.getItem("highScore") || 0)
-);
+  const [highScore, setHighScore] = useState(() =>
+    Number(localStorage.getItem("highScore") || 0),
+  );
   const [started, setStarted] = useState(false);
   const [question, setQuestion] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [bonus, setBonus] = useState("");
 
   const playing = started && time > 0;
 
@@ -31,7 +34,7 @@ export default function App() {
     if (!playing) return;
 
     const timer = setInterval(() => {
-      setTime(t => Math.max(0, t - 1));
+      setTime((t) => Math.max(0, t - 1));
     }, 1000);
 
     return () => clearInterval(timer);
@@ -46,17 +49,43 @@ export default function App() {
     setScore(0);
     setQuestion(generateQuestion());
     setStarted(true);
+    setStreak(0);
+    setBestStreak(0);
+    setBonus("");
   }
 
   function checkAnswer(option) {
+    if (!playing || !question) return;
+
+    setBonus("");
+
     if (option === question.answer) {
       const newScore = score + 10;
+      const newStreak = streak + 1;
+
       setScore(newScore);
-      setHighScore(best => Math.max(best, newScore));
-      setTime(t => t + 3);
-  } else {
-    setTime(t => Math.max(0, t - 2));
-}
+      setHighScore((best) => Math.max(best, newScore));
+      setStreak(newStreak);
+      setBestStreak((best) => Math.max(best, newStreak));
+
+      let extraTime = 3;
+
+      if (newStreak % 10 === 0) {
+        extraTime += 10;
+        setBonus("🔥 Legendary Combo! +10s");
+      } else if (newStreak % 5 === 0) {
+        extraTime += 5;
+        setBonus("⚡ Super Combo! +5s");
+      } else if (newStreak % 3 === 0) {
+        extraTime += 2;
+        setBonus("🔥 Combo! +2s");
+      }
+
+      setTime((t) => t + extraTime);
+    } else {
+      setStreak(0);
+      setTime((t) => Math.max(0, t - 2));
+    }
 
     setQuestion(generateQuestion());
   }
@@ -64,25 +93,29 @@ export default function App() {
   return (
     <main className="game">
       <p className="tagline">STEAL TIME. BEAT THE CLOCK. Play Fast!</p>
-      <h1>TIME <span>THIEF</span></h1>
+
+      <h1>
+        TIME <span>THIEF</span>
+      </h1>
 
       <p>Score: {score}</p>
       <p>🏆 High Score: {highScore}</p>
+      <p>🔥 Streak: {streak}</p>
+      <p>🏅 Best Streak: {bestStreak}</p>
 
-      <div className={`timer ${time <= 3 ? "danger" : ""}`}>
-        {time}s
-      </div>
+      {bonus && <p className="bonus">{bonus}</p>}
+
+      <div className={`timer ${time <= 3 ? "danger" : ""}`}>{time}s</div>
 
       {playing ? (
         <>
-          <h2>{question.a} + {question.b} = ?</h2>
+          <h2>
+            {question.a} + {question.b} = ?
+          </h2>
 
           <div className="options">
-            {question.options.map(option => (
-              <button
-                key={option}
-                onClick={() => checkAnswer(option)}
-              >
+            {question.options.map((option) => (
+              <button key={option} onClick={() => checkAnswer(option)}>
                 {option}
               </button>
             ))}
