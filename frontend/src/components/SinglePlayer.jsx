@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./App.css";
+import "../App.css";
 
 function generateQuestion(difficulty) {
   const max = difficulty === "easy" ? 10 : difficulty === "medium" ? 30 : 100;
@@ -59,6 +59,7 @@ export default function App() {
     setBonus("");
     setPaused(false);
   }
+
 
   function checkAnswer(option) {
     if (!playing || !question || paused) return;
